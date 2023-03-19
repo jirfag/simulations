@@ -1,0 +1,11 @@
+cffi==1.15.0
+greenlet==0.4.13
+hpy==0.0.3
+numpy==1.21.6
+pyparsing==3.0.9
+python-dateutil==2.8.2
+pytz==2023.2
+readline==6.2.4.1
+simpy==4.0.1
+six==1.16.0
+typing_extensions==4.5.0
