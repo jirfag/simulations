@@ -19,4 +19,5 @@ pip3 install -r requirements.txt
 
 ### Linked Articles
 
-- [habr.com: in russian language](https://habr.com/ru/companies/yandex/articles/762678/)
+- [medium.com: in english](https://medium.com/yandex/good-retry-bad-retry-an-incident-story-648072d3cee6)
+- [habr.com: in russian](https://habr.com/ru/companies/yandex/articles/762678/)
