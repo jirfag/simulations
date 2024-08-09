@@ -19,14 +19,22 @@ class VisualizeParams:
     highlight_interval: Optional[TimeInterval] = None
 
 
-PANEL_CLIENT_UPTIME = localize("client uptime", "аптайм клиентов")
-PANEL_SERVER_RPS_AMPLIFICATION = localize("server rps amplification", "амплификация нагрузки на сервер")
-PANEL_CLIENT_LATENCY_P50 = localize("p50 client latency", "p50 клиенткие тайминги")
-PANEL_CLIENT_LATENCY_P99 = localize("p99 client latency", "p99 клиенткие тайминги")
-PANEL_CLIENT_LATENCY_AVG = localize("avg client latency", "средние клиенткие тайминги")
-PANEL_SERVER_FAILURE_RATE = localize("server failure rate", "доля ошибок сервера")
-PANEL_SERVER_AVG_REQ_QUEUE = localize("avg server queue size", "средний размер очереди запросов сервера")
-PANEL_SERVER_MAX_REQ_QUEUE = localize("max server queue size", "макс размер очереди запросов сервера")
-PANEL_SERVER_UPTIME = localize("server uptime", "аптайм сервера")
-PANEL_SERVER_AVG_CPU_USAGE = localize("avg server cpu usage", "средний cpu usage сервера")
-PANEL_SERVER_AVG_LATENCY = localize("avg server latency", "средние серверные тайминги")
+PANEL_CLIENT_UPTIME = localize("Client Uptime", "аптайм клиентов")
+PANEL_SERVER_RPS_AMPLIFICATION = localize(
+    "Server RPS Amplification", "амплификация нагрузки на сервер"
+)
+PANEL_CLIENT_LATENCY_P50 = localize("Client Latency p50", "p50 клиенткие тайминги")
+PANEL_CLIENT_LATENCY_P99 = localize("Client Latency p99", "p99 клиенткие тайминги")
+PANEL_CLIENT_LATENCY_AVG = localize("Client Latency Avg", "средние клиенткие тайминги")
+PANEL_SERVER_FAILURE_RATE = localize("Server Failure Rate", "доля ошибок сервера")
+PANEL_SERVER_AVG_REQ_QUEUE = localize(
+    "Avg Server Queue Size", "средний размер очереди запросов сервера"
+)
+PANEL_SERVER_MAX_REQ_QUEUE = localize(
+    "Max Server Queue Size", "макс размер очереди запросов сервера"
+)
+PANEL_SERVER_UPTIME = localize("Server Uptime", "аптайм сервера")
+PANEL_SERVER_AVG_CPU_USAGE = localize(
+    "Avg Server CPU Usage", "средний cpu usage сервера"
+)
+PANEL_SERVER_AVG_LATENCY = localize("Avg Server Latency", "средние серверные тайминги")

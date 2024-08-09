@@ -1,8 +1,8 @@
 import os
 
 
-is_english = os.environ.get("LANG", "en_US")[: len("en")] == "en"
+is_russian = os.environ.get("LANG", "en_US")[: len("en")] == "ru"
 
 
 def localize(str_eng: str, str_rus: str) -> str:
-    return str_eng if is_english else str_rus
+    return str_rus if is_russian else str_eng

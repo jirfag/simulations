@@ -5,7 +5,13 @@ from typing import List, Tuple
 import time
 from events import ClientResultList, ServerResultList
 
-from shared import TIME_DURATION_MS, TimeDuration, TimeInterval, TimePoint, TIME_DURATION_SECOND
+from shared import (
+    TIME_DURATION_MS,
+    TimeDuration,
+    TimeInterval,
+    TimePoint,
+    TIME_DURATION_SECOND,
+)
 from simulator import MultiSimulationResult, SimulationResult
 from visualize_params import *
 
@@ -38,10 +44,16 @@ def timepoint_to_chart_point(relative_tp: TimePoint) -> int:
     return (relative_tp * CHART_POINTS_PER_SECOND) // TIME_DURATION_SECOND
 
 
-def get_chart_point_time_interval(chart_point_num: int, from_time: TimePoint) -> TimeInterval:
+def get_chart_point_time_interval(
+    chart_point_num: int, from_time: TimePoint
+) -> TimeInterval:
     return TimeInterval(
-        begin=from_time + TimePoint(chart_point_num * TIME_DURATION_SECOND / CHART_POINTS_PER_SECOND),
-        end=from_time + TimePoint((chart_point_num + 1) * TIME_DURATION_SECOND / CHART_POINTS_PER_SECOND - 1),
+        begin=from_time
+        + TimePoint(chart_point_num * TIME_DURATION_SECOND / CHART_POINTS_PER_SECOND),
+        end=from_time
+        + TimePoint(
+            (chart_point_num + 1) * TIME_DURATION_SECOND / CHART_POINTS_PER_SECOND - 1
+        ),
     )
 
 
@@ -59,7 +71,9 @@ def fill_missing_values(values: List[float]):
 
 
 # calc_client_metrics calcs client stats for every point in interval [from_time; to_time).
-def calc_client_metrics(client_results: ClientResultList, from_time: TimePoint, to_time: TimePoint):
+def calc_client_metrics(
+    client_results: ClientResultList, from_time: TimePoint, to_time: TimePoint
+):
     point_count = get_chart_point_count(to_time - from_time)
     total_counts, succeeded_counts = [0] * point_count, [0] * point_count
     all_latencies: List[List[float]] = [[] for _ in range(point_count)]
@@ -71,22 +85,56 @@ def calc_client_metrics(client_results: ClientResultList, from_time: TimePoint, 
         if cr.is_ok:
             succeeded_counts[chart_point] += 1
         all_latencies[chart_point].append(cr.duration)
-    uptimes = [100 * succeeded_counts[i] / total_counts[i] if total_counts[i] != 0 else None for i in range(point_count)]
-    p50_latencies = [p50_latency(all_latencies[i]) / TIME_DURATION_MS if len(all_latencies[i]) != 0 else None for i in range(point_count)]
-    p99_latencies = [p99_latency(all_latencies[i]) / TIME_DURATION_MS if len(all_latencies[i]) != 0 else None for i in range(point_count)]
-    avg_latencies = [avg_latency(all_latencies[i]) / TIME_DURATION_MS if len(all_latencies[i]) != 0 else None for i in range(point_count)]
+    uptimes = [
+        100 * succeeded_counts[i] / total_counts[i] if total_counts[i] != 0 else None
+        for i in range(point_count)
+    ]
+    p50_latencies = [
+        (
+            p50_latency(all_latencies[i]) / TIME_DURATION_MS
+            if len(all_latencies[i]) != 0
+            else None
+        )
+        for i in range(point_count)
+    ]
+    p99_latencies = [
+        (
+            p99_latency(all_latencies[i]) / TIME_DURATION_MS
+            if len(all_latencies[i]) != 0
+            else None
+        )
+        for i in range(point_count)
+    ]
+    avg_latencies = [
+        (
+            avg_latency(all_latencies[i]) / TIME_DURATION_MS
+            if len(all_latencies[i]) != 0
+            else None
+        )
+        for i in range(point_count)
+    ]
     return uptimes, p50_latencies, p99_latencies, avg_latencies
 
 
-def calc_server_cpu_usages(server_results: ServerResultList, from_time: TimePoint, to_time: TimePoint, cpu_count: int):
+def calc_server_cpu_usages(
+    server_results: ServerResultList,
+    from_time: TimePoint,
+    to_time: TimePoint,
+    cpu_count: int,
+):
     point_count = get_chart_point_count(to_time - from_time)
     cpu_usages_sum = [0] * point_count
 
     for sr in server_results:
-        if sr.timepoint < from_time:  # don't check to_time because sr.timepoint is request end time and it can overlap
+        if (
+            sr.timepoint < from_time
+        ):  # don't check to_time because sr.timepoint is request end time and it can overlap
             continue
 
-        req_started_at, req_finished_at = sr.timepoint - sr.handle_duration, sr.timepoint
+        req_started_at, req_finished_at = (
+            sr.timepoint - sr.handle_duration,
+            sr.timepoint,
+        )
         begin_cp = timepoint_to_chart_point(req_started_at - from_time)
         end_cp = timepoint_to_chart_point(req_finished_at - from_time)
         sr_interval = TimeInterval(req_started_at, req_finished_at)
@@ -97,11 +145,20 @@ def calc_server_cpu_usages(server_results: ServerResultList, from_time: TimePoin
             cpu_usages_sum[cp] += intersect_interval.length()
 
     chart_point_time_len = get_chart_point_time_length()
-    return [100 * cpu_usages_sum[i] / chart_point_time_len / cpu_count for i in range(point_count)]
+    return [
+        100 * cpu_usages_sum[i] / chart_point_time_len / cpu_count
+        for i in range(point_count)
+    ]
 
 
 # calc_server_metrics calcs server stats for every point in interval [from_time; to_time).
-def calc_server_metrics(server_results: ServerResultList, from_time: TimePoint, to_time: TimePoint, target_rps: int, cpu_count: int):
+def calc_server_metrics(
+    server_results: ServerResultList,
+    from_time: TimePoint,
+    to_time: TimePoint,
+    target_rps: int,
+    cpu_count: int,
+):
     point_count = get_chart_point_count(to_time - from_time)
     total_counts, succeeded_counts, pending_reqs, max_pending_reqs, latency_sums = (
         [0] * point_count,
@@ -120,27 +177,69 @@ def calc_server_metrics(server_results: ServerResultList, from_time: TimePoint, 
         pending_reqs[p] += sr.pending_req_count
         max_pending_reqs[p] = max(max_pending_reqs[p], sr.pending_req_count)
         latency_sums[p] += sr.handle_duration
-    rps_amplifications = [100 * tc * CHART_POINTS_PER_SECOND / target_rps for tc in total_counts]
-    uptimes = [100 * succeeded_counts[i] / total_counts[i] if total_counts[i] != 0 else None for i in range(point_count)]
-    avg_queue_sizes = [pending_reqs[i] / total_counts[i] if total_counts[i] != 0 else None for i in range(point_count)]
-    avg_cpu_usages = calc_server_cpu_usages(server_results, from_time, to_time, cpu_count)
-    avg_latencies = [latency_sums[i] / total_counts[i] / TIME_DURATION_MS if total_counts[i] != 0 else None for i in range(point_count)]
-    return rps_amplifications, uptimes, avg_queue_sizes, max_pending_reqs, avg_cpu_usages, avg_latencies
+    rps_amplifications = [
+        100 * tc * CHART_POINTS_PER_SECOND / target_rps for tc in total_counts
+    ]
+    uptimes = [
+        100 * succeeded_counts[i] / total_counts[i] if total_counts[i] != 0 else None
+        for i in range(point_count)
+    ]
+    avg_queue_sizes = [
+        pending_reqs[i] / total_counts[i] if total_counts[i] != 0 else None
+        for i in range(point_count)
+    ]
+    avg_cpu_usages = calc_server_cpu_usages(
+        server_results, from_time, to_time, cpu_count
+    )
+    avg_latencies = [
+        (
+            latency_sums[i] / total_counts[i] / TIME_DURATION_MS
+            if total_counts[i] != 0
+            else None
+        )
+        for i in range(point_count)
+    ]
+    return (
+        rps_amplifications,
+        uptimes,
+        avg_queue_sizes,
+        max_pending_reqs,
+        avg_cpu_usages,
+        avg_latencies,
+    )
 
 
-X_AXIS_TIME = localize("time, s", "время, с")
-LINE_VARIABLE = localize("retry strategy", "стратегия ретраев")
-Y_AXIS_CLIENT_UPTIME = localize("client uptime, %", "аптайм клиентов, %")
-Y_AXIS_SERVER_RPS_AMPLIFICATION = localize("relative server RPS, %", "относительный серверный rps, %")
-Y_AXIS_CLIENT_LATENCY_P50 = localize("p50 client latency, ms", "p50 клиентские тайминги, мс")
-Y_AXIS_CLIENT_LATENCY_P99 = localize("p99 client latency, ms", "p99 клиентские тайминги, мс")
-Y_AXIS_CLIENT_LATENCY_AVG = localize("avg client latency, ms", "средние клиентские тайминги, мс")
-Y_AXIS_SERVER_FAILURE_RATE = localize("server failure rate, %", "доля ошибок сервера, %")
-Y_AXIS_AVG_PENDING_REQ_COUNT = localize("avg server queue size", "средний размер очереди запросов сервера")
-Y_AXIS_MAX_PENDING_REQ_COUNT = localize("max server queue size", "макс размер очереди запросов сервера")
-Y_AXIS_SERVER_UPTIME = localize("server uptime, %", "аптайм сервера, %")
-Y_AXIS_SERVER_AVG_CPU_USAGE = localize("avg server cpu usage, %", "средний cpu usage сервера, %")
-Y_AXIS_SERVER_AVG_LATENCY = localize("avg server latency, ms", "средние серверные тайминги, мс")
+X_AXIS_TIME = localize("Time (s)", "время, с")
+LINE_VARIABLE = localize("Retry Strategy", "стратегия ретраев")
+Y_AXIS_CLIENT_UPTIME = localize("Client Uptime (%)", "аптайм клиентов, %")
+Y_AXIS_SERVER_RPS_AMPLIFICATION = localize(
+    "Relative Server RPS (%)", "относительный серверный rps, %"
+)
+Y_AXIS_CLIENT_LATENCY_P50 = localize(
+    "Client Latency p50 (ms)", "p50 клиентские тайминги, мс"
+)
+Y_AXIS_CLIENT_LATENCY_P99 = localize(
+    "Client Latency p99 (ms)", "p99 клиентские тайминги, мс"
+)
+Y_AXIS_CLIENT_LATENCY_AVG = localize(
+    "Client Latency Avg (ms)", "средние клиентские тайминги, мс"
+)
+Y_AXIS_SERVER_FAILURE_RATE = localize(
+    "Server Failure Rate (%)", "доля ошибок сервера, %"
+)
+Y_AXIS_AVG_PENDING_REQ_COUNT = localize(
+    "Avg Server Queue Size", "средний размер очереди запросов сервера"
+)
+Y_AXIS_MAX_PENDING_REQ_COUNT = localize(
+    "Max Server Queue Size", "макс размер очереди запросов сервера"
+)
+Y_AXIS_SERVER_UPTIME = localize("Server Uptime (%)", "аптайм сервера, %")
+Y_AXIS_SERVER_AVG_CPU_USAGE = localize(
+    "Avg Server CPU Usage (%)", "средний cpu usage сервера, %"
+)
+Y_AXIS_SERVER_AVG_LATENCY = localize(
+    "Avg Server Latency (ms)", "средние серверные тайминги, мс"
+)
 
 ALL_TIME_FRAME_COLUMNS = [
     X_AXIS_TIME,
@@ -174,8 +273,17 @@ PANEL_TO_Y_AXIS_NAME = {
 
 def fill_dataframe_by_time(df: pd.DataFrame, res: SimulationResult):
     max_time = res.params.target_duration
-    client_uptimes, p50_client_latencies, p99_client_latencies, avg_client_latencies = calc_client_metrics(res.client, 0, max_time)
-    server_loads, uptimes, avg_pending_counts, max_pending_counts, avg_cpu_usages, avg_server_latencies = calc_server_metrics(
+    client_uptimes, p50_client_latencies, p99_client_latencies, avg_client_latencies = (
+        calc_client_metrics(res.client, 0, max_time)
+    )
+    (
+        server_loads,
+        uptimes,
+        avg_pending_counts,
+        max_pending_counts,
+        avg_cpu_usages,
+        avg_server_latencies,
+    ) = calc_server_metrics(
         res.server, 0, max_time, res.params.target_rps, res.params.cpu_count
     )
 
@@ -214,7 +322,9 @@ def visualize_stats_by_time(sim_res: MultiSimulationResult, params: VisualizePar
         if params.needed_lines and res.params.id not in params.needed_lines:
             continue
         fill_dataframe_by_time(df, res)
-    print(f"Built dataframe for {len(sim_res.results)} results in {time.time() - started_at}s")
+    print(
+        f"Built dataframe for {len(sim_res.results)} results in {time.time() - started_at}s"
+    )
     visualize_dataframe(df, X_AXIS_TIME, params)
 
 
@@ -254,13 +364,24 @@ def visualize_dataframe(df: pd.DataFrame, x_axis_column: str, params: VisualizeP
         kwargs = {}
         if i != 0:
             kwargs["legend"] = 0
-        sns.lineplot(data=df, x=x_axis_column, y=panel, hue=LINE_VARIABLE, ax=axes[i], palette=var_to_color, **kwargs)
+        sns.lineplot(
+            data=df,
+            x=x_axis_column,
+            y=panel,
+            hue=LINE_VARIABLE,
+            ax=axes[i],
+            palette=var_to_color,
+            **kwargs,
+        )
         axes[i].set_title(panel)
         axes[i].set(ylabel=PANEL_TO_Y_AXIS_NAME[panel])
         axes[i].set(xlim=params.xlim)
         if params.highlight_interval:
             axes[i].vlines(
-                x=[params.highlight_interval.begin / TIME_DURATION_SECOND, params.highlight_interval.end / TIME_DURATION_SECOND],
+                x=[
+                    params.highlight_interval.begin / TIME_DURATION_SECOND,
+                    params.highlight_interval.end / TIME_DURATION_SECOND,
+                ],
                 ymin=df[panel].min(),
                 ymax=df[panel].max(),
                 linestyles="dashed",
